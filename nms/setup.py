@@ -14,10 +14,10 @@ if torch.cuda.is_available():
     include_dirs += ['src/cuda/']
 
     setup(
-            name='nms',
+            name='ext_nms',
             ext_modules=[
                 CUDAExtension(
-                        name='nms',
+                        name='ext_nms',
                         include_dirs=include_dirs,
                         sources=sources,
                         extra_compile_args={'cxx': ['-g'],
@@ -28,10 +28,10 @@ if torch.cuda.is_available():
             })
 else:
     setup(
-            name='nms',
+            name='ext_nms',
             ext_modules=[
                 CppExtension(
-                        name='nms',
+                        name='ext_nms',
                         include_dirs=include_dirs,
                         sources=sources,
                         extra_compile_args={'cxx': ['-g']})
