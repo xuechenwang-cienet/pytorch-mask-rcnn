@@ -4,12 +4,11 @@
 // Licensed under The MIT License [see fast-rcnn/LICENSE for details]
 // Written by Shaoqing Ren
 // ------------------------------------------------------------------
-#include <THC/THC.h>
-#include <TH/TH.h>
-#include <math.h>
-#include <stdio.h>
+
+#include "nms.h"
 
 #include "cuda/nms_kernel.h"
+
 
 
 extern THCState *state;
@@ -20,24 +19,25 @@ int gpu_nms(THLongTensor * keep, THLongTensor* num_out, THCudaTensor * boxes, fl
   THArgCheck(THCudaTensor_isContiguous(state, boxes), 2, "boxes must be contiguous");
   // Number of ROIs
   int boxes_num = THCudaTensor_size(state, boxes, 0);
-  int boxes_dim = THCudaTensor_size(state, boxes, 1);
+  // int boxes_dim = THCudaTensor_size(state, boxes, 1);
 
   float* boxes_flat = THCudaTensor_data(state, boxes);
 
   const int col_blocks = DIVUP(boxes_num, threadsPerBlock);
   THCudaLongTensor * mask = THCudaLongTensor_newWithSize2d(state, boxes_num, col_blocks);
-  unsigned long long* mask_flat = THCudaLongTensor_data(state, mask);
+  unsigned long long* mask_flat = (long long unsigned int*)THCudaLongTensor_data(state, mask);
 
   _nms(boxes_num, boxes_flat, mask_flat, nms_overlap_thresh);
 
   THLongTensor * mask_cpu = THLongTensor_newWithSize2d(boxes_num, col_blocks);
-  THLongTensor_copyCuda(state, mask_cpu, mask);
+  // THLongTensor_copyCuda(state, mask_cpu, mask);
+  THCudaLongTensor_copy(state, mask_cpu, mask);
   THCudaLongTensor_free(state, mask);
 
-  unsigned long long * mask_cpu_flat = THLongTensor_data(mask_cpu);
+  unsigned long long * mask_cpu_flat = (long long unsigned int*)THLongTensor_data(mask_cpu);
 
   THLongTensor * remv_cpu = THLongTensor_newWithSize1d(col_blocks);
-  unsigned long long* remv_cpu_flat = THLongTensor_data(remv_cpu);
+  unsigned long long* remv_cpu_flat = (long long unsigned int*)THLongTensor_data(remv_cpu);
   THLongTensor_fill(remv_cpu, 0);
 
   long * keep_flat = THLongTensor_data(keep);

@@ -1,5 +1,8 @@
-#include <TH/TH.h>
-#include <math.h>
+
+#include <torch/extension.h>
+
+#include "nms.h"
+
 
 int cpu_nms(THLongTensor * keep_out, THLongTensor * num_out, THFloatTensor * boxes, THLongTensor * order, THFloatTensor * areas, float nms_overlap_thresh) {
     // boxes has to be sorted
@@ -66,4 +69,10 @@ int cpu_nms(THLongTensor * keep_out, THLongTensor * num_out, THFloatTensor * box
     *num_out_flat = num_to_keep;
     THByteTensor_free(suppressed);
     return 1;
+}
+
+
+PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
+  m.def("cpu_nms", &cpu_nms, "cpu_nms");
+  m.def("gpu_nms", &gpu_nms, "gpu_nms");
 }

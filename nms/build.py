@@ -1,34 +1,41 @@
 import os
 import torch
-from torch.utils.ffi import create_extension
+# from torch.utils.ffi import create_extension
+from torch.utils.cpp_extension import BuildExtension, CppExtension, CUDAExtension
+from setuptools import setup, find_packages
 
 
-sources = ['src/nms.c']
-headers = ['src/nms.h']
-defines = []
-with_cuda = False
+sources = ['src/nms.cpp']
+include_dirs = ['src/']
 
 if torch.cuda.is_available():
     print('Including CUDA code.')
-    sources += ['src/nms_cuda.c']
-    headers += ['src/nms_cuda.h']
-    defines += [('WITH_CUDA', None)]
-    with_cuda = True
+    sources += ['src/nms_cuda.cpp', 'src/cuda/nms_kernel.cu']
+    include_dirs += ['src/cuda/']
 
-this_file = os.path.dirname(os.path.realpath(__file__))
-print(this_file)
-extra_objects = ['src/cuda/nms_kernel.cu.o']
-extra_objects = [os.path.join(this_file, fname) for fname in extra_objects]
-
-ffi = create_extension(
-    '_ext.nms',
-    headers=headers,
-    sources=sources,
-    define_macros=defines,
-    relative_to=__file__,
-    with_cuda=with_cuda,
-    extra_objects=extra_objects
-)
-
-if __name__ == '__main__':
-    ffi.build()
+    setup(
+            name='nms',
+            ext_modules=[
+                CUDAExtension(
+                        name='nms',
+                        include_dirs=include_dirs,
+                        sources=sources,
+                        extra_compile_args={'cxx': ['-g'],
+                                            'nvcc': ['-O2']})
+            ],
+            cmdclass={
+                'build_ext': BuildExtension
+            })
+else:
+    setup(
+            name='nms_extension',
+            ext_modules=[
+                CppExtension(
+                        name='nms_extension',
+                        include_dirs=include_dirs,
+                        sources=sources,
+                        extra_compile_args={'cxx': ['-g']})
+            ],
+            cmdclass={
+                'build_ext': BuildExtension
+            })
