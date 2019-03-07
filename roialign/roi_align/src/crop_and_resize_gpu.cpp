@@ -1,4 +1,4 @@
-#include <THC/THC.h>
+#include "crop_and_resize.h"
 #include "cuda/crop_and_resize_kernel.h"
 
 extern THCState *state;
