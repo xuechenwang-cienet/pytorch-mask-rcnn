@@ -28,10 +28,10 @@ if torch.cuda.is_available():
             })
 else:
     setup(
-            name='nms_extension',
+            name='nms',
             ext_modules=[
                 CppExtension(
-                        name='nms_extension',
+                        name='nms',
                         include_dirs=include_dirs,
                         sources=sources,
                         extra_compile_args={'cxx': ['-g']})
